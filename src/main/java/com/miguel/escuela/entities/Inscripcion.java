@@ -7,12 +7,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "INSCRIPCIONES", uniqueConstraints = @UniqueConstraint(
@@ -37,6 +38,20 @@ public class Inscripcion {
     @Column(name = "FECHA_INSCRIPCION", nullable = false)
     private LocalDate fechaInscripcion = LocalDate.now();
 
-    @OneToOne(mappedBy = "inscripcion")
+    @OneToOne(mappedBy = "inscripcion", cascade = CascadeType.ALL, orphanRemoval = true)
     private Calificacion calificacion;
+
+    public void removerCalificacion() {
+        this.calificacion = null;
+    }
+
+    public void actualizar(Alumno alumno, Grupo grupo, LocalDate fechaInscripcion) {
+        if (alumno == null) throw new IllegalArgumentException("Alumno requerido");
+        if (grupo == null) throw new IllegalArgumentException("Grupo requerido");
+        if (fechaInscripcion == null) throw new IllegalArgumentException("Fecha requerida");
+
+        this.alumno = alumno;
+        this.grupo = grupo;
+        this.fechaInscripcion = fechaInscripcion;
+    }
 }

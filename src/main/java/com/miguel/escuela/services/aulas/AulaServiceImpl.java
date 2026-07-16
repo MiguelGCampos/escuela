@@ -3,6 +3,7 @@ package com.miguel.escuela.services.aulas;
 import com.miguel.escuela.dto.aulas.AulaRequest;
 import com.miguel.escuela.dto.aulas.AulaResponse;
 import com.miguel.escuela.entities.Aula;
+import com.miguel.escuela.exceptions.EntidadRelacionadaException;
 import com.miguel.escuela.exceptions.RecursoNoEncontradoException;
 import com.miguel.escuela.mappers.AulaMapper;
 import com.miguel.escuela.repositories.AulaRepository;
@@ -77,7 +78,7 @@ public class AulaServiceImpl implements AulaService {
     public void eliminar(Long id) {
         Aula aula =  obtenerAulaOException(id);
         if(grupoRepository.existsByAulaId(id))
-            throw new IllegalArgumentException("No se puede eliminar el aula porque ya tiene grupos asignados");
+            throw new EntidadRelacionadaException("No se puede eliminar el aula porque ya tiene grupos asignados");
         aulaRepository.delete(aula);
 
         log.info("Aula con id {} eliminado", id);
