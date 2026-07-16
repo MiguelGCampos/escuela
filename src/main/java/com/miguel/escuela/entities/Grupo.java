@@ -11,7 +11,7 @@ import java.util.List;
 
 @Entity
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "GRUPOS", uniqueConstraints = @UniqueConstraint(
@@ -46,4 +46,6 @@ public class Grupo {
     @Builder.Default
     @OneToMany(mappedBy = "grupo")
     private List<Inscripcion> inscripciones = new ArrayList<>();
+
+
 }

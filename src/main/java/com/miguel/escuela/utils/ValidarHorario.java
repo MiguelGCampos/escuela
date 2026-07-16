@@ -1,7 +1,10 @@
 package com.miguel.escuela.utils;
 
+import org.springframework.stereotype.Component;
+
 import java.util.regex.Pattern;
 
+@Component
 public class ValidarHorario {
 
     private static final Pattern HORA_PATTERN = Pattern.compile("^([01]\\d|2[0-3]):[0-5]\\d$");
@@ -18,10 +21,10 @@ public class ValidarHorario {
 
     public void validarOrden(String inicio, String fin) {
         if (inicio == null || fin == null) {
-            return; // Si falta alguna, no podemos comparar el orden aún
+            return;
         }
         if (inicio.compareTo(fin) >= 0) {
-            throw new IllegalArgumentException("La hora de inicio debe ser anterior a la de fin");
+            throw new IllegalStateException("La hora de inicio debe ser anterior a la de fin");
         }
     }
 }

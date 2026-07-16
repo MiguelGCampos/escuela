@@ -1,5 +1,7 @@
 package com.miguel.escuela.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.miguel.escuela.exceptions.RecursoNoEncontradoException;
 import com.miguel.escuela.utils.StringCustomUtils;
 import lombok.Getter;
@@ -27,4 +29,15 @@ public enum DiaSemana {
         }
         throw new RecursoNoEncontradoException("No existe un día con la descripción: " + descripcion);
     }
+
+    @JsonCreator
+    public static DiaSemana fromJson(String value) {
+        return obtenerDiaPorDescripcion(value);
+    }
+
+    @JsonValue
+    public String toJson() {
+        return descripcion; // así se serializa como "Lunes"
+    }
+
 }

@@ -1,7 +1,7 @@
 package com.miguel.escuela.dto.datos;
 
 public record DatosCurso(
-        String nombre,
+        String curso,
         String descripcion,
         Integer creditos
 ) {
