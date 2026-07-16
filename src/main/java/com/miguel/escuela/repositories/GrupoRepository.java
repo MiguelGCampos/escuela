@@ -1,8 +1,14 @@
 package com.miguel.escuela.repositories;
 
+import com.miguel.escuela.entities.Aula;
+import com.miguel.escuela.entities.Curso;
 import com.miguel.escuela.entities.Grupo;
+import com.miguel.escuela.entities.Maestro;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GrupoRepository extends JpaRepository <Grupo, Long> {
     boolean existsByMaestroId(Long idMaestro);
+    boolean existsByAulaId(Long idAula);
+    boolean existsByCursoId(Long idCurso);
+    boolean existsByCursoAndMaestroAndAulaAndPeriodo(Curso curso, Maestro maestro, Aula aula, String periodo);
 }

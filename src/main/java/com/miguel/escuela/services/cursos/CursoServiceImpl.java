@@ -5,9 +5,11 @@ import com.miguel.escuela.dto.cursos.CursoRequest;
 import com.miguel.escuela.dto.cursos.CursoResponse;
 import com.miguel.escuela.entities.Aula;
 import com.miguel.escuela.entities.Curso;
+import com.miguel.escuela.exceptions.EntidadRelacionadaException;
 import com.miguel.escuela.exceptions.RecursoNoEncontradoException;
 import com.miguel.escuela.mappers.CursoMapper;
 import com.miguel.escuela.repositories.CursoRepository;
+import com.miguel.escuela.repositories.GrupoRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ import java.util.List;
 public class CursoServiceImpl implements CursoService{
 
     private final CursoRepository cursoRepository;
+
+    private final GrupoRepository grupoRepository;
 
     private final CursoMapper cursoMapper;
 
@@ -76,6 +80,9 @@ public class CursoServiceImpl implements CursoService{
     public void eliminar(Long id) {
         Curso curso = obtenerCursoOException(id);
 
+        if(grupoRepository.existsByCursoId(id))
+            throw new EntidadRelacionadaException("No se puede eliminar el curso ya tiene grupos asignados");
+
         cursoRepository.delete(curso);
 
         log.info("Curso con id {} eliminada", id);
@@ -102,4 +109,5 @@ public class CursoServiceImpl implements CursoService{
                 ()->new RecursoNoEncontradoException("Curso no encontrado con id: "+id)
         );
     }
+
 }

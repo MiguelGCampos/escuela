@@ -6,6 +6,7 @@ import com.miguel.escuela.entities.Aula;
 import com.miguel.escuela.exceptions.RecursoNoEncontradoException;
 import com.miguel.escuela.mappers.AulaMapper;
 import com.miguel.escuela.repositories.AulaRepository;
+import com.miguel.escuela.repositories.GrupoRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,8 @@ import java.util.List;
 public class AulaServiceImpl implements AulaService {
 
     private final AulaRepository aulaRepository;
+
+    private final GrupoRepository grupoRepository;
 
     private final AulaMapper aulaMapper;
 
@@ -73,7 +76,8 @@ public class AulaServiceImpl implements AulaService {
     @Override
     public void eliminar(Long id) {
         Aula aula =  obtenerAulaOException(id);
-
+        if(grupoRepository.existsByAulaId(id))
+            throw new IllegalArgumentException("No se puede eliminar el aula porque ya tiene grupos asignados");
         aulaRepository.delete(aula);
 
         log.info("Aula con id {} eliminado", id);
