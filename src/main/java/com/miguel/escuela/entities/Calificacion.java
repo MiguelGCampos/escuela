@@ -15,7 +15,7 @@ import java.util.Date;
 
 @Entity
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "CALIFICACIONES")
@@ -39,31 +39,36 @@ public class Calificacion {
     @JoinColumn(name = "ID_INSCRIPCION", nullable = false, unique = true)
     private Inscripcion inscripcion;
 
-    public void actualizar(BigDecimal valorCalificacion, Date fechaRegistro) {
-
+    public void registrar(BigDecimal valorCalificacion, LocalDate fechaRegistro, Inscripcion inscripcion) {
         validarDatos(valorCalificacion, fechaRegistro);
-
+        if (inscripcion == null) {
+            throw new IllegalArgumentException("La inscripción es requerida");
+        }
         this.calificacion = valorCalificacion;
-
-        /*if (fechaRegistro == null) {
-            this.fechaRegistro = new Date();
-        } else {
-            this.fechaRegistro = fechaRegistro;
-        }*/
+        this.fechaRegistro = fechaRegistro != null ? fechaRegistro : LocalDate.now();
+        this.inscripcion = inscripcion;
     }
 
-    private void validarDatos(BigDecimal calificacion, Date fechaRegistro) {
+    public void actualizar(BigDecimal valorCalificacion, LocalDate fechaRegistro) {
+        validarDatos(valorCalificacion, fechaRegistro);
+        this.calificacion = valorCalificacion;
+        this.fechaRegistro = fechaRegistro != null ? fechaRegistro : LocalDate.now();
+    }
+
+    private void validarDatos(BigDecimal calificacion, LocalDate fechaRegistro) {
         if (calificacion == null) {
             throw new IllegalArgumentException("La calificación es requerida");
         }
-
-        if (calificacion.compareTo(new BigDecimal("0.0")) < 0 ||
-                calificacion.compareTo(new BigDecimal("10.0")) > 0) {
+        if (calificacion.compareTo(BigDecimal.ZERO) < 0 ||
+                calificacion.compareTo(BigDecimal.TEN) > 0) {
             throw new IllegalArgumentException("La calificación debe estar entre 0.0 y 10.0");
         }
-
-        if (fechaRegistro != null && fechaRegistro.after(new Date())) {
+        if (fechaRegistro != null && fechaRegistro.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("La fecha de registro no puede ser futura");
         }
+    }
+
+    public BigDecimal obtenerValor() {
+        return this.calificacion;
     }
 }

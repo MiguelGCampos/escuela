@@ -1,14 +1,14 @@
 package com.miguel.escuela.repositories;
 
-import com.miguel.escuela.dto.datos.CalificacionPeriodo;
+import com.miguel.escuela.entities.Alumno;
+import com.miguel.escuela.entities.Grupo;
 import com.miguel.escuela.entities.Inscripcion;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
-import java.util.List;
 
 public interface InscripcionRepository extends JpaRepository <Inscripcion, Long>{
     boolean existsByAlumnoId(Long idAlumno);
     boolean existsByGrupoId(Long idGrupo);
+    boolean existsByAlumnoAndGrupo(Alumno alumno, Grupo grupo);
+    boolean existsByCalificacionId(Long idCalificacion);
+    long countByGrupo(Grupo grupo);
 }

@@ -1,5 +1,6 @@
 package com.miguel.escuela.entities;
 
+import com.miguel.escuela.utils.StringCustomUtils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,5 +48,8 @@ public class Grupo {
     @OneToMany(mappedBy = "grupo")
     private List<Inscripcion> inscripciones = new ArrayList<>();
 
-
+    public Grupo(String periodo) {
+        StringCustomUtils.validarTamanio(periodo,5,20,"El periodo es requerido");
+        this.periodo = periodo;
+    }
 }

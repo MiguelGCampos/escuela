@@ -4,6 +4,7 @@ import com.miguel.escuela.dto.grupos.GrupoRequest;
 import com.miguel.escuela.dto.grupos.GrupoResponse;
 import com.miguel.escuela.entities.*;
 import com.miguel.escuela.exceptions.EntidadRelacionadaException;
+import com.miguel.escuela.exceptions.RecursoNoEncontradoException;
 import com.miguel.escuela.mappers.GrupoMapper;
 import com.miguel.escuela.repositories.*;
 import com.miguel.escuela.utils.ServiceUtils;
@@ -70,14 +71,14 @@ public class GrupoServiceImpl implements GrupoService{
         log.info("Actualizando grupo con id {}", id);
 
         Grupo grupoExistente = grupoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Grupo no encontrado"));
 
         Curso curso = cursoRepository.findById(request.idCurso())
-                .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Curso no encontrado"));
         Maestro maestro = maestroRepository.findById(request.idMaestro())
-                .orElseThrow(() -> new RuntimeException("Maestro no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Maestro no encontrado"));
         Aula aula = aulaRepository.findById(request.idAula())
-                .orElseThrow(() -> new RuntimeException("Aula no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Aula no encontrada"));
 
         boolean existeOtro = grupoRepository.existsByCursoAndMaestroAndAulaAndPeriodo(curso, maestro, aula, request.periodo())
                 && !(grupoExistente.getCurso().equals(curso)
@@ -86,7 +87,7 @@ public class GrupoServiceImpl implements GrupoService{
                 && grupoExistente.getPeriodo().equals(request.periodo()));
 
         if (existeOtro) {
-            throw new RuntimeException("Ya existe otro grupo con esa combinación de Curso + Maestro + Aula + Periodo");
+            throw new IllegalArgumentException("Ya existe otro grupo con esa combinación de Curso + Maestro + Aula + Periodo");
         }
 
         Grupo grupoActualizado = grupoMapper.requestAEntidad(request, curso, maestro, aula)
