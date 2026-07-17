@@ -33,6 +33,11 @@ public class Aula {
     @OneToMany(mappedBy = "aula")
     private List<Grupo> grupos = new ArrayList<>();
 
+    public boolean cambioEnDatos(String nombre, Integer capacidad){
+        return  !this.nombre.equals(nombre) ||
+                !this.capacidad.equals(capacidad);
+    }
+
     public void actualizar(String nombre, Integer capacidad){
         validarDatos(nombre, capacidad);
 

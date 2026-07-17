@@ -34,5 +34,37 @@ public class Horario {
     @Column(name = "HORA_FIN", nullable = false, length = 5)
     private String horaFin;
 
-    private static final ValidarHorario validador = new ValidarHorario();
+    public void registrar(Grupo grupo, DiaSemana dia, String horaInicio, String horaFin) {
+        validarDatos(grupo, dia, horaInicio, horaFin);
+
+        this.grupo = grupo;
+        this.diaSemana = dia;
+        this.horaInicio = horaInicio.trim();
+        this.horaFin = horaFin.trim();
+    }
+
+    public void actualizar(Grupo grupo, DiaSemana dia, String horaInicio, String horaFin) {
+        validarDatos(grupo, dia, horaInicio, horaFin);
+
+        this.grupo = grupo;
+        this.diaSemana = dia;
+        this.horaInicio = horaInicio.trim();
+        this.horaFin = horaFin.trim();
+    }
+
+    public boolean cambioEnDatos(Long idGrupo, DiaSemana dia, String horaInicio, String horaFin) {
+        return !this.grupo.getId().equals(idGrupo) ||
+                !this.diaSemana.equals(dia) ||
+                !this.horaInicio.equals(horaInicio) ||
+                !this.horaFin.equals(horaFin);
+    }
+
+    private void validarDatos(Grupo grupo, DiaSemana dia, String horaInicio, String horaFin) {
+        if (grupo == null) {
+            throw new IllegalArgumentException("El grupo no puede ser nulo");
+        }
+        if (dia == null) {
+            throw new IllegalArgumentException("El día es requerido");
+        }
+    }
 }

@@ -50,10 +50,8 @@ public class InscripcionServiceImpl implements InscripcionService{
     public InscripcionResponse registrar(InscripcionRequest request) {
         log.info("Registrando nuevo grupo...");
 
-        Alumno alumno = alumnoRepository.findById(request.idAlumno())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Alumno no encontrado"));
-        Grupo grupo = grupoRepository.findById(request.idGrupo())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Grupo no encontrado"));
+        Alumno alumno = obtenerAlumno(request.idAlumno());
+        Grupo grupo = obtenerGrupo(request.idGrupo());
 
         if (inscripcionRepository.existsByAlumnoAndGrupo(alumno, grupo)) {
             throw new IllegalArgumentException("El alumno ya está inscrito en este grupo");
@@ -73,13 +71,10 @@ public class InscripcionServiceImpl implements InscripcionService{
 
     @Override
     public InscripcionResponse actualizar(InscripcionRequest request, Long id) {
-        Inscripcion existente = inscripcionRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Inscripción no encontrada"));
+        Inscripcion existente = obtenerInscripcion(id);
 
-        Alumno alumno = alumnoRepository.findById(request.idAlumno())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Alumno no encontrado"));
-        Grupo grupo = grupoRepository.findById(request.idGrupo())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Grupo no encontrado"));
+        Alumno alumno = obtenerAlumno(request.idAlumno());
+        Grupo grupo = obtenerGrupo(request.idGrupo());
 
         boolean existeOtra = inscripcionRepository.existsByAlumnoAndGrupo(alumno, grupo)
                 && !(existente.getAlumno().equals(alumno) && existente.getGrupo().equals(grupo));
@@ -106,8 +101,7 @@ public class InscripcionServiceImpl implements InscripcionService{
     public void eliminar(Long id) {
         log.info("Eliminando inscripcion con id {}", id);
 
-        Inscripcion inscripcion = inscripcionRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Inscripción no encontrada"));
+        Inscripcion inscripcion = obtenerInscripcion(id);
 
         if(calificacionRepository.existsByInscripcionId(id))
             throw new EntidadRelacionadaException("No se puede eliminar la inscripción ya tiene calificaciones asignados");
@@ -117,5 +111,11 @@ public class InscripcionServiceImpl implements InscripcionService{
 
     private Inscripcion obtenerInscripcion(Long id){
         return ServiceUtils.obtenerEntidadOException(inscripcionRepository, id, Inscripcion.class);
+    }
+    private Alumno obtenerAlumno(Long id){
+        return ServiceUtils.obtenerEntidadOException(alumnoRepository, id, Alumno.class);
+    }
+    private Grupo obtenerGrupo(Long id){
+        return ServiceUtils.obtenerEntidadOException(grupoRepository, id, Grupo.class);
     }
 }

@@ -2,12 +2,14 @@ package com.miguel.escuela.services.aulas;
 
 import com.miguel.escuela.dto.aulas.AulaRequest;
 import com.miguel.escuela.dto.aulas.AulaResponse;
+import com.miguel.escuela.entities.Alumno;
 import com.miguel.escuela.entities.Aula;
 import com.miguel.escuela.exceptions.EntidadRelacionadaException;
 import com.miguel.escuela.exceptions.RecursoNoEncontradoException;
 import com.miguel.escuela.mappers.AulaMapper;
 import com.miguel.escuela.repositories.AulaRepository;
 import com.miguel.escuela.repositories.GrupoRepository;
+import com.miguel.escuela.utils.ServiceUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,9 +38,7 @@ public class AulaServiceImpl implements AulaService {
 
     @Override
     public AulaResponse obtenerPorId(Long id) {
-        return aulaMapper.entidadAResponse(aulaRepository.findById(id).orElseThrow(
-                ()->new RecursoNoEncontradoException("No se encontró un aula con el id: "+id)
-        ));
+        return aulaMapper.entidadAResponse(obtenerAula(id));
     }
 
     @Override
@@ -58,16 +58,16 @@ public class AulaServiceImpl implements AulaService {
 
     @Override
     public AulaResponse actualizar(AulaRequest request, Long id) {
-        Aula aula = obtenerAulaOException(id);
+        Aula aula = obtenerAula(id);
 
         log.info("Actualizando aula con id: {}", id);
 
         validarCambiosUnicos(request, id);
 
-        aula.actualizar(
-                request.nombre(),
-                request.capacidad()
-        );
+        if (aula.cambioEnDatos(request.nombre().trim(), request.capacidad())) {
+            aula.actualizar(request.nombre(), request.capacidad());
+            log.info("Datos del aula actualizados para el aula con id: {}", id);
+        }
 
         log.info("Aula con id {} actualizado", id);
 
@@ -76,7 +76,7 @@ public class AulaServiceImpl implements AulaService {
 
     @Override
     public void eliminar(Long id) {
-        Aula aula =  obtenerAulaOException(id);
+        Aula aula =  obtenerAula(id);
         if(grupoRepository.existsByAulaId(id))
             throw new EntidadRelacionadaException("No se puede eliminar el aula porque ya tiene grupos asignados");
         aulaRepository.delete(aula);
@@ -98,11 +98,7 @@ public class AulaServiceImpl implements AulaService {
                     + request.nombre());
     }
 
-    private Aula obtenerAulaOException(Long id){
-        log.info("Buscando aula con id: {}", id);
-
-        return aulaRepository.findById(id).orElseThrow(
-                ()->new RecursoNoEncontradoException("Aula no encontrado con id: "+id)
-        );
+    private Aula obtenerAula(Long id){
+        return ServiceUtils.obtenerEntidadOException(aulaRepository, id, Aula.class);
     }
 }

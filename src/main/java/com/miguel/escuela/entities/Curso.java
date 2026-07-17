@@ -55,4 +55,11 @@ public class Curso {
         if(creditos==null||creditos<0)
             throw new IllegalArgumentException("La cantidad es requerida y debe ser positiva");
     }
+
+    public boolean cambioEnDatos(String nombre, String descripcion,
+                                 Integer creditos){
+        return  !this.nombre.equals(nombre) ||
+                !this.descripcion.equals(descripcion) ||
+                !this.creditos.equals(creditos);
+    }
 }

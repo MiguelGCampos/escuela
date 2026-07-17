@@ -2,9 +2,7 @@ package com.miguel.escuela.services.calificaciones;
 
 import com.miguel.escuela.dto.calificaciones.CalificacionRequest;
 import com.miguel.escuela.dto.calificaciones.CalificacionResponse;
-import com.miguel.escuela.entities.Calificacion;
-import com.miguel.escuela.entities.Horario;
-import com.miguel.escuela.entities.Inscripcion;
+import com.miguel.escuela.entities.*;
 import com.miguel.escuela.exceptions.RecursoNoEncontradoException;
 import com.miguel.escuela.mappers.CalificacionMapper;
 import com.miguel.escuela.repositories.CalificacionRepository;
@@ -45,8 +43,7 @@ public class CalificacionServiceImpl implements CalificacionService{
 
     @Override
     public CalificacionResponse registrar(CalificacionRequest request) {
-        Inscripcion inscripcion = inscripcionRepository.findById(request.idInscripcion())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Inscripción no encontrada"));
+        Inscripcion inscripcion = obtenerInscripcion(request.idInscripcion());
 
         if (calificacionRepository.existsByInscripcion(inscripcion)) {
             throw new IllegalArgumentException("Ya existe una calificación para esta inscripción");
@@ -61,20 +58,33 @@ public class CalificacionServiceImpl implements CalificacionService{
 
     @Override
     public CalificacionResponse actualizar(CalificacionRequest request, Long id) {
-        Calificacion existente = calificacionRepository.findByInscripcionId(request.idInscripcion())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Calificación no encontrada"));
+        Calificacion existente = obtenerCalificacion(id);
 
-        existente.actualizar(request.calificacion(), LocalDate.now());
+        Inscripcion nuevaInscripcion = obtenerInscripcion(request.idInscripcion());
+
+        boolean existeOtra = calificacionRepository.existsByInscripcion(nuevaInscripcion)
+                && !existente.getInscripcion().equals(nuevaInscripcion);
+
+        if (existeOtra) {
+            throw new IllegalArgumentException("Ya existe una calificación para esta inscripción");
+        }
+
+        if (existente.cambioEnDatos(request.idInscripcion(), request.calificacion())) {
+            existente.actualizar(request.calificacion(), LocalDate.now(), nuevaInscripcion);
+            log.info("Calificación {} actualizada para inscripción {}", id, nuevaInscripcion.getId());
+        } else {
+            log.info("No hubo cambios en los datos de la calificación {}", id);
+        }
 
         Calificacion guardada = calificacionRepository.save(existente);
         return calificacionMapper.entidadAResponse(guardada);
     }
 
+
     @Override
     public void eliminar(Long id) {
         log.info("Eliminando calificacion con id: ", id);
-        Calificacion calificacion = calificacionRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Calificación no encontrada"));
+        Calificacion calificacion = obtenerCalificacion(id);
 
         calificacion.getInscripcion().removerCalificacion();
 
@@ -83,5 +93,9 @@ public class CalificacionServiceImpl implements CalificacionService{
 
     private Calificacion obtenerCalificacion(Long id){
         return ServiceUtils.obtenerEntidadOException(calificacionRepository, id, Calificacion.class);
+    }
+
+    private Inscripcion obtenerInscripcion(Long id){
+        return ServiceUtils.obtenerEntidadOException(inscripcionRepository, id, Inscripcion.class);
     }
 }
