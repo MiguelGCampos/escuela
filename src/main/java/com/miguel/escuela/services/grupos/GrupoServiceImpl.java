@@ -48,12 +48,9 @@ public class GrupoServiceImpl implements GrupoService{
     public GrupoResponse registrar(GrupoRequest request) {
         log.info("Registrando nuevo grupo...");
 
-        Curso curso = cursoRepository.findById(request.idCurso())
-                .orElseThrow(() -> new IllegalArgumentException("Curso no encontrado"));
-        Maestro maestro = maestroRepository.findById(request.idMaestro())
-                .orElseThrow(() -> new IllegalArgumentException("Maestro no encontrado"));
-        Aula aula = aulaRepository.findById(request.idAula())
-                .orElseThrow(() -> new IllegalArgumentException("Aula no encontrada"));
+        Curso curso = obtenerCurso(request.idCurso());
+        Maestro maestro = obtenerMaestro(request.idMaestro());
+        Aula aula = obtenerAula(request.idAula());
 
         if (grupoRepository.existsByCursoAndMaestroAndAulaAndPeriodo(curso, maestro, aula, request.periodo())) {
             throw new IllegalArgumentException("Ya existe un grupo con esa combinación de Curso + Maestro + Aula + Periodo");
@@ -70,35 +67,25 @@ public class GrupoServiceImpl implements GrupoService{
     public GrupoResponse actualizar(GrupoRequest request, Long id) {
         log.info("Actualizando grupo con id {}", id);
 
-        Grupo grupoExistente = grupoRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Grupo no encontrado"));
+        Grupo grupoExistente = obtenerGrupo(id);
 
-        Curso curso = cursoRepository.findById(request.idCurso())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Curso no encontrado"));
-        Maestro maestro = maestroRepository.findById(request.idMaestro())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Maestro no encontrado"));
-        Aula aula = aulaRepository.findById(request.idAula())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Aula no encontrada"));
+        Curso curso = obtenerCurso(request.idCurso());
+        Maestro maestro = obtenerMaestro(request.idMaestro());
+        Aula aula = obtenerAula(request.idAula());
 
-        boolean existeOtro = grupoRepository.existsByCursoAndMaestroAndAulaAndPeriodo(curso, maestro, aula, request.periodo())
-                && !(grupoExistente.getCurso().equals(curso)
-                && grupoExistente.getMaestro().equals(maestro)
-                && grupoExistente.getAula().equals(aula)
-                && grupoExistente.getPeriodo().equals(request.periodo()));
-
-        if (existeOtro) {
+        if (existeOtroGrupo(grupoExistente, curso, maestro, aula, request.periodo())) {
             throw new IllegalArgumentException("Ya existe otro grupo con esa combinación de Curso + Maestro + Aula + Periodo");
         }
 
-        Grupo grupoActualizado = grupoMapper.requestAEntidad(request, curso, maestro, aula)
-                .toBuilder()
-                .id(grupoExistente.getId())
-                .build();
+        if (grupoExistente.cambioEnDatos(request.idCurso(), request.idMaestro(), request.idAula(), request.periodo())) {
+            grupoExistente.actualizar(curso, maestro, aula, request.periodo());
+            log.info("Grupo con id {} actualizado", id);
+        }
 
-        // Guardar y devolver response
-        Grupo grupoGuardado = grupoRepository.save(grupoActualizado);
+        Grupo grupoGuardado = grupoRepository.save(grupoExistente);
         return grupoMapper.entidadAResponse(grupoGuardado);
     }
+
 
 
     @Override
@@ -124,6 +111,22 @@ public class GrupoServiceImpl implements GrupoService{
     private Grupo obtenerGrupo(Long id){
         return ServiceUtils.obtenerEntidadOException(grupoRepository, id, Grupo.class);
     }
+    private Curso obtenerCurso(Long id){
+        return ServiceUtils.obtenerEntidadOException(cursoRepository, id, Curso.class);
+    }
+    private Maestro obtenerMaestro(Long id){
+        return ServiceUtils.obtenerEntidadOException(maestroRepository, id, Maestro.class);
+    }
+    private Aula obtenerAula(Long id){
+        return ServiceUtils.obtenerEntidadOException(aulaRepository, id, Aula.class);
+    }
 
+    private boolean existeOtroGrupo(Grupo grupoExistente, Curso curso, Maestro maestro, Aula aula, String periodo) {
+        return grupoRepository.existsByCursoAndMaestroAndAulaAndPeriodo(curso, maestro, aula, periodo)
+                && !(grupoExistente.getCurso().equals(curso)
+                && grupoExistente.getMaestro().equals(maestro)
+                && grupoExistente.getAula().equals(aula)
+                && grupoExistente.getPeriodo().equals(periodo));
+    }
 
 }

@@ -49,7 +49,43 @@ public class Grupo {
     private List<Inscripcion> inscripciones = new ArrayList<>();
 
     public Grupo(String periodo) {
-        StringCustomUtils.validarTamanio(periodo,5,20,"El periodo es requerido");
-        this.periodo = periodo;
+        validarPeriodo(periodo);
+        this.periodo = periodo.trim();
+    }
+
+    public void actualizar(Curso curso, Maestro maestro, Aula aula, String periodo) {
+        validarDatos(curso, maestro, aula, periodo);
+
+        this.curso = curso;
+        this.maestro = maestro;
+        this.aula = aula;
+        this.periodo = periodo.trim();
+    }
+
+    public boolean cambioEnDatos(Long idCurso, Long idMaestro,
+                                 Long idAula, String periodo) {
+        return !this.curso.getId().equals(idCurso) ||
+                !this.maestro.getId().equals(idMaestro) ||
+                !this.aula.getId().equals(idAula) ||
+                !this.periodo.equals(periodo);
+    }
+
+    private void validarDatos(Curso curso, Maestro maestro, Aula aula, String periodo) {
+        if (curso == null) {
+            throw new IllegalArgumentException("El curso no puede ser nulo");
+        }
+        if (maestro == null) {
+            throw new IllegalArgumentException("El maestro no puede ser nulo");
+        }
+        if (aula == null) {
+            throw new IllegalArgumentException("El aula no puede ser nula");
+        }
+        validarPeriodo(periodo);
+    }
+
+    private void validarPeriodo(String periodo) {
+        StringCustomUtils.validarNoVacio(periodo, "El periodo es requerido");
+        StringCustomUtils.validarTamanio(periodo, 5, 20,
+                "El periodo debe tener entre 5 y 20 caracteres");
     }
 }

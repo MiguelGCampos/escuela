@@ -50,8 +50,7 @@ public class HorarioServiceImpl implements HorarioService{
     public HorarioResponse registrar(HorarioRequest request) {
         log.info("Registrando nuevo horario...");
 
-        Grupo grupo = grupoRepository.findById(request.idGrupo())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Grupo no encontrado"));
+        Grupo grupo = obtenerGrupo(request.idGrupo());
 
         validarHorario.validarFormato(request.horaInicio());
         validarHorario.validarFormato(request.horaFin());
@@ -59,32 +58,12 @@ public class HorarioServiceImpl implements HorarioService{
 
         DiaSemana diaNormalizado = request.dia();
 
-        boolean traslapeGrupo = horarioRepository.existsTraslapeGrupo(
-                grupo.getId(),
-                grupo.getPeriodo(),
-                diaNormalizado,
-                request.horaInicio(),
-                request.horaFin()
-        );
-
-        boolean traslapeAula = horarioRepository.existsTraslapeAula(
-                grupo.getAula().getId(),
-                grupo.getPeriodo(),
-                diaNormalizado,
-                request.horaInicio(),
-                request.horaFin()
-        );
-
-        if (traslapeGrupo || traslapeAula) {
+        if (existeTraslapeGrupo(grupo, diaNormalizado, request.horaInicio(), request.horaFin())
+                || existeTraslapeAula(grupo, diaNormalizado, request.horaInicio(), request.horaFin())) {
             throw new IllegalArgumentException("El horario se traslapa con otro del mismo grupo o aula");
         }
 
-        Horario horario = Horario.builder()
-                .grupo(grupo)
-                .diaSemana(diaNormalizado)
-                .horaInicio(request.horaInicio())
-                .horaFin(request.horaFin())
-                .build();
+        Horario horario = horarioMapper.requestAEntidad(request, grupo);
 
         Horario guardado = horarioRepository.save(horario);
         return horarioMapper.entidadAResponse(guardado);
@@ -94,10 +73,8 @@ public class HorarioServiceImpl implements HorarioService{
     public HorarioResponse actualizar(HorarioRequest request, Long id) {
         log.info("Actualizando horario con id {}", id);
 
-        Horario existente = horarioRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Horario no encontrado"));
-
-        Grupo grupo = existente.getGrupo();
+        Horario existente = obtenerHorario(id);
+        Grupo grupo = obtenerGrupo(request.idGrupo());
 
         validarHorario.validarFormato(request.horaInicio());
         validarHorario.validarFormato(request.horaFin());
@@ -105,40 +82,17 @@ public class HorarioServiceImpl implements HorarioService{
 
         DiaSemana diaNormalizado = request.dia();
 
-        boolean traslapeGrupo = horarioRepository.existsTraslapeGrupoActualizar(
-                grupo.getId(),
-                grupo.getPeriodo(),
-                diaNormalizado,
-                request.horaInicio(),
-                request.horaFin(),
-                existente.getId()
-        );
-
-        boolean traslapeAula = horarioRepository.existsTraslapeAulaActualizar(
-                grupo.getAula().getId(),
-                grupo.getPeriodo(),
-                diaNormalizado,
-                request.horaInicio(),
-                request.horaFin(),
-                existente.getId()
-        );
-
-        if ((traslapeGrupo || traslapeAula) &&
-                !(request.horaInicio().equals(existente.getHoraInicio())
-                        && request.horaFin().equals(existente.getHoraFin())
-                        && request.dia().equals(existente.getDiaSemana()))) {
-            throw new IllegalArgumentException("El horario se traslapa con otro del mismo grupo o aula en el mismo periodo");
+        if (existeTraslapeGrupo(grupo, diaNormalizado, request.horaInicio(), request.horaFin())
+                || existeTraslapeAula(grupo, diaNormalizado, request.horaInicio(), request.horaFin())) {
+            throw new IllegalArgumentException("El horario se traslapa con otro del mismo grupo o aula");
         }
 
-        Horario actualizado = Horario.builder()
-                .id(existente.getId())
-                .grupo(grupo)
-                .diaSemana(diaNormalizado)
-                .horaInicio(request.horaInicio())
-                .horaFin(request.horaFin())
-                .build();
+        if (existente.cambioEnDatos(grupo.getId(), diaNormalizado, request.horaInicio(), request.horaFin())) {
+            existente.actualizar(grupo, diaNormalizado, request.horaInicio(), request.horaFin());
+            log.info("Horario con id {} actualizado", id);
+        }
 
-        Horario guardado = horarioRepository.save(actualizado);
+        Horario guardado = horarioRepository.save(existente);
         return horarioMapper.entidadAResponse(guardado);
     }
 
@@ -147,8 +101,7 @@ public class HorarioServiceImpl implements HorarioService{
     public void eliminar(Long id) {
         log.info("Eliminando horario con id {}", id);
 
-        Horario horario = horarioRepository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Horario no encontrado"));
+        Horario horario = obtenerHorario(id);
 
         horarioRepository.delete(horario);
     }
@@ -157,6 +110,17 @@ public class HorarioServiceImpl implements HorarioService{
         return ServiceUtils.obtenerEntidadOException(horarioRepository, id, Horario.class);
     }
 
+    private Grupo obtenerGrupo(Long id){
+        return ServiceUtils.obtenerEntidadOException(grupoRepository, id, Grupo.class);
+    }
+
+    private boolean existeTraslapeGrupo(Grupo grupo, DiaSemana dia, String inicio, String fin) {
+        return horarioRepository.existsTraslapeGrupo(grupo.getId(), grupo.getPeriodo(), dia, inicio, fin);
+    }
+
+    private boolean existeTraslapeAula(Grupo grupo, DiaSemana dia, String inicio, String fin) {
+        return horarioRepository.existsTraslapeAula(grupo.getAula().getId(), grupo.getPeriodo(), dia, inicio, fin);
+    }
 
 }
 

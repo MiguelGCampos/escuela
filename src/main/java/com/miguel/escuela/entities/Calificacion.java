@@ -49,10 +49,11 @@ public class Calificacion {
         this.inscripcion = inscripcion;
     }
 
-    public void actualizar(BigDecimal valorCalificacion, LocalDate fechaRegistro) {
+    public void actualizar(BigDecimal valorCalificacion, LocalDate fechaRegistro, Inscripcion inscripcion) {
         validarDatos(valorCalificacion, fechaRegistro);
         this.calificacion = valorCalificacion;
         this.fechaRegistro = fechaRegistro != null ? fechaRegistro : LocalDate.now();
+        this.inscripcion = inscripcion;
     }
 
     private void validarDatos(BigDecimal calificacion, LocalDate fechaRegistro) {
@@ -68,7 +69,8 @@ public class Calificacion {
         }
     }
 
-    public BigDecimal obtenerValor() {
-        return this.calificacion;
+    public boolean cambioEnDatos(Long id, BigDecimal calificacion){
+        return  !this.id.equals(id) ||
+                !this.calificacion.equals(calificacion);
     }
 }

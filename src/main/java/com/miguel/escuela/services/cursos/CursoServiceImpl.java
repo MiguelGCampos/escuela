@@ -3,6 +3,7 @@ package com.miguel.escuela.services.cursos;
 import com.miguel.escuela.dto.aulas.AulaRequest;
 import com.miguel.escuela.dto.cursos.CursoRequest;
 import com.miguel.escuela.dto.cursos.CursoResponse;
+import com.miguel.escuela.entities.Alumno;
 import com.miguel.escuela.entities.Aula;
 import com.miguel.escuela.entities.Curso;
 import com.miguel.escuela.exceptions.EntidadRelacionadaException;
@@ -10,6 +11,7 @@ import com.miguel.escuela.exceptions.RecursoNoEncontradoException;
 import com.miguel.escuela.mappers.CursoMapper;
 import com.miguel.escuela.repositories.CursoRepository;
 import com.miguel.escuela.repositories.GrupoRepository;
+import com.miguel.escuela.utils.ServiceUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,9 +40,7 @@ public class CursoServiceImpl implements CursoService{
 
     @Override
     public CursoResponse obtenerPorId(Long id) {
-        return cursoMapper.entidadAResponse(cursoRepository.findById(id).orElseThrow(
-                ()->new RecursoNoEncontradoException("No se encontro un curso con la id: "+id)
-        ));
+        return cursoMapper.entidadAResponse(obtenerCurso(id));
     }
 
     @Override
@@ -60,16 +60,19 @@ public class CursoServiceImpl implements CursoService{
 
     @Override
     public CursoResponse actualizar(CursoRequest request, Long id) {
-        Curso curso = obtenerCursoOException(id);
+        Curso curso = obtenerCurso(id);
 
         log.info("Actualizando sucursal con id: {}", id);
 
         validarCambiosUnicos(request, id);
-
-        curso.actualizar(
-                request.nombre(),
-                request.descripcion(),
-                request.creditos());
+        if (curso.cambioEnDatos(request.nombre(), request.descripcion(), request.creditos())) {
+            curso.actualizar(
+                    request.nombre(),
+                    request.descripcion(),
+                    request.creditos()
+            );
+            log.info("Curso con id {} actualizado", id);
+        }
 
         log.info("Curso con id {} actualizado", id);
 
@@ -78,7 +81,7 @@ public class CursoServiceImpl implements CursoService{
 
     @Override
     public void eliminar(Long id) {
-        Curso curso = obtenerCursoOException(id);
+        Curso curso = obtenerCurso(id);
 
         if(grupoRepository.existsByCursoId(id))
             throw new EntidadRelacionadaException("No se puede eliminar el curso ya tiene grupos asignados");
@@ -102,12 +105,8 @@ public class CursoServiceImpl implements CursoService{
                     + request.nombre());
     }
 
-    private Curso obtenerCursoOException(Long id){
-        log.info("Buscando aula con id: {}", id);
-
-        return cursoRepository.findById(id).orElseThrow(
-                ()->new RecursoNoEncontradoException("Curso no encontrado con id: "+id)
-        );
+    private Curso obtenerCurso(Long id){
+        return ServiceUtils.obtenerEntidadOException(cursoRepository, id, Curso.class);
     }
 
 }
